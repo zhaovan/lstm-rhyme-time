@@ -53,10 +53,11 @@ def get_data(file_path):
         syllable_dict = {}
         i = 0
         for s in unique_syllables:
-            syllable_dict[i] = s
+            syllable_dict[s] = i
             i += 1
         print(syllable_dict)
-        return syllables, syllable_dict, len(syllable_dict)
+        syllables_indexes = [syllable_dict[s] for s in syllables]
+        return syllables_indexes, syllable_dict, len(syllable_dict)
 
 
 if __name__ == "__main__":
