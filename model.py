@@ -5,14 +5,11 @@ from preprocess import *
 
 class PoemGenerator(tf.keras.Model):
     def __init__(self, vocab_size):
-        """
-        The ReinforceWithBaseline class that inherits from tf.keras.Model.
-        """
         super(PoemGenerator, self).__init__()
 
         # Numerical Hyperparameters
         self.batch_size = 128
-        self.window_size = 150
+        self.window_size = 50
         self.learning_rate = 0.001
         self.rnn_size = 128
         self.hidden_size = 256
@@ -23,36 +20,41 @@ class PoemGenerator(tf.keras.Model):
 
         self.embedding_layer = tf.keras.layers.Embedding(
             self.vocab_size, self.embedding_size, input_length=self.window_size)
-        self.rnn_layer = tf.keras.layers.GRU(
+        self.rnn_layer = tf.keras.layers.LSTM(
             self.rnn_size, return_sequences=True, return_state=True)
+        # self.dense = tf.keras.layers.Dense(
+        #     self.vocab_size, activation='relu')
         self.dense_1 = tf.keras.layers.Dense(
             self.hidden_size, activation='relu')
         self.dense_2 = tf.keras.layers.Dense(
-            self.vocab_size, activation='softmax')
+            self.vocab_size)
 
     def call(self, inputs, initial_state):
         embeddings = self.embedding_layer(tf.convert_to_tensor(inputs))
-        (output, state) = self.rnn_layer(embeddings, initial_state)
+        (output, last_output, cell_state) = self.rnn_layer(embeddings, initial_state)
         logits = self.dense_1(output)
-        probs = self.dense_2(logits)
-        return probs, state
+        logits = self.dense_2(logits)
+        # logits = self.dense(output)
+        return logits, last_output, cell_state
 
     def loss(self, logits, labels):
-        return tf.math.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(labels, logits))
+        return tf.math.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True))
 
 
 def train(model, train_inputs, train_labels):
     i = 0
     end = model.batch_size
     length = len(train_labels)
-    indices = tf.random.shuffle([l for l in range(length)])
-    train_inputs = tf.gather(train_inputs, indices)
-    train_labels = tf.gather(train_labels, indices)
+    # indices = tf.random.shuffle([l for l in range(length)])
+    # train_inputs = tf.gather(train_inputs, indices)
+    # train_labels = tf.gather(train_labels, indices)
+    previous_state = None
     while end <= length:
         batch_inputs = train_inputs[i:end]
         batch_labels = train_labels[i:end]
         with tf.GradientTape() as tape:
-            logits, _ = model(batch_inputs, None)
+            logits, last_output, previous_cell_state = model(batch_inputs, previous_state)
+            previous_state = (last_output, previous_cell_state)
             loss = model.loss(logits, batch_labels)
             print(i / model.batch_size, ": ", loss)
         gradients = tape.gradient(loss, model.trainable_variables)
@@ -71,7 +73,7 @@ def test(model, test_inputs, test_labels):
     while end <= length:
         batch_inputs = test_inputs[i:end]
         batch_labels = test_labels[i:end]
-        logits, _ = model(batch_inputs, None)
+        logits, _, _ = model(batch_inputs, None)
         loss += model.loss(logits, batch_labels)
         avg += 1
         i += model.batch_size
@@ -90,9 +92,12 @@ def generate_sentence(word1, length, vocab, model):
     text = [first_string]
 
     for i in range(length):
-        logits, previous_state = model.call(next_input, previous_state)
-        out_index = np.argmax(np.array(logits[0][0]))
-
+        logits, last_output, cell_state = model.call(next_input, previous_state)
+        previous_state = (last_output, cell_state)
+        # out_index = np.argmax(np.array(logits[0][0]))
+        logits = tf.squeeze(logits, 0)
+        out_index = tf.random.categorical(logits, num_samples=1)[-1, 0].numpy()
+        
         text.append(reverse_vocab[out_index])
         next_input = [[out_index]]
 
