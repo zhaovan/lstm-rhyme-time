@@ -6,3 +6,4 @@ https://towardsdatascience.com/generating-haiku-with-deep-learning-dbf5d18b4246
 
 https://towardsdatascience.com/limericking-part-1-context-and-haikus-3eb057c8154f
 
+https://pronouncing.readthedocs.io/en/latest/tutorial.html
