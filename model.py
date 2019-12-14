@@ -9,7 +9,7 @@ class PoemGenerator(tf.keras.Model):
 
         # Numerical Hyperparameters
         self.batch_size = 128
-        self.window_size = 50
+        self.window_size = 150
         self.learning_rate = 0.001
         self.rnn_size = 128
         self.hidden_size = 256
@@ -22,8 +22,6 @@ class PoemGenerator(tf.keras.Model):
             self.vocab_size, self.embedding_size, input_length=self.window_size)
         self.rnn_layer = tf.keras.layers.LSTM(
             self.rnn_size, return_sequences=True, return_state=True)
-        # self.dense = tf.keras.layers.Dense(
-        #     self.vocab_size, activation='relu')
         self.dense_1 = tf.keras.layers.Dense(
             self.hidden_size, activation='relu')
         self.dense_2 = tf.keras.layers.Dense(
@@ -41,7 +39,7 @@ class PoemGenerator(tf.keras.Model):
         return tf.math.reduce_mean(tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True))
 
 
-def train(model, train_inputs, train_labels):
+def train(model, train_inputs, train_labels, epoch):
     i = 0
     end = model.batch_size
     length = len(train_labels)
@@ -56,7 +54,6 @@ def train(model, train_inputs, train_labels):
             logits, last_output, previous_cell_state = model(batch_inputs, previous_state)
             previous_state = (last_output, previous_cell_state)
             loss = model.loss(logits, batch_labels)
-            print(i / model.batch_size, ": ", loss)
         gradients = tape.gradient(loss, model.trainable_variables)
         model.optimizer.apply_gradients(
             zip(gradients, model.trainable_variables))
@@ -91,7 +88,7 @@ def generate_sentence(word1, length, vocab, model):
     next_input = [[first_word_index]]
     text = [first_string]
 
-    for i in range(length):
+    for _ in range(length):
         logits, last_output, cell_state = model.call(next_input, previous_state)
         previous_state = (last_output, cell_state)
         # out_index = np.argmax(np.array(logits[0][0]))
@@ -105,10 +102,18 @@ def generate_sentence(word1, length, vocab, model):
 
 
 def main():
-    (train_ids, syllable_dict, syllable_size) = get_data(
+    (ids, syllable_dict, syllable_size) = get_data(
         "./data/limericks.csv")
+    
+    num_train_ids = int(0.8 * len(ids))
+    train_ids = ids[0:num_train_ids]
+    test_ids = ids[num_train_ids:]
+
     train_inputs = train_ids[:-1]
     train_labels = train_ids[1:]
+
+    test_inputs = test_ids[:-1]
+    test_labels = test_ids[1:]
 
     model = PoemGenerator(syllable_size)
 
@@ -122,10 +127,30 @@ def main():
         train_labels_setup.append(train_labels[i:end])
         i += model.window_size
         end += model.window_size
-    train(model, train_inputs_setup, train_labels_setup)
+
+    i = 0
+    end = model.window_size
+    test_length = len(test_labels)
+    test_inputs_setup = []
+    test_labels_setup = []
+    while end <= test_length:
+        test_inputs_setup.append(test_inputs[i:end])
+        test_labels_setup.append(test_labels[i:end])
+        i += model.window_size
+        end += model.window_size
+    
+
+    for i in range(15):
+        # print("EPOCH " + str(i + 1))
+        train(model, train_inputs_setup, train_labels_setup, i + 1)
+        perplexity = test(model, test_inputs_setup, test_labels_setup)
+        print("PERPLEXITY OF EPOCH " + str(i + 1) + ": " + str(perplexity))
     while True:
         query = input("Enter syllable: ")
-        generate_sentence(query, 500, syllable_dict, model)
+        try:
+            generate_sentence(query, 500, syllable_dict, model)
+        except:
+            print("Invalid key. Type again")
 
 
 if __name__ == '__main__':
