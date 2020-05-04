@@ -1,17 +1,17 @@
-# cs1470-final-project
----
+# LSTM-Rhyme-Time
+This was the final project completed for CSCI1470 (Deep Learning) at Brown. The project was based off various papers and approaches but focused on creating a poem generator (specifically limericks) using an LSTM cell.
 
-https://docs.google.com/document/d/1zOmqEOaBIPAx5tqlhVPC8ugSF5PlfKobD7nyJwSX-j0/edit?usp=sharing
 
-https://docs.google.com/document/d/1WS2bcXzYRXFTKqot0ExQDrc4Wo9x2SAg32r8_e1uLW0/edit?usp=sharing
+## Examples of resources that were used
 
-https://towardsdatascience.com/generating-haiku-with-deep-learning-dbf5d18b4246
+- https://docs.google.com/document/d/1zOmqEOaBIPAx5tqlhVPC8ugSF5PlfKobD7nyJwSX-j0/edit?usp=sharing
+- https://docs.google.com/document/d/1WS2bcXzYRXFTKqot0ExQDrc4Wo9x2SAg32r8_e1uLW0/edit?usp=sharing
+- https://towardsdatascience.com/generating-haiku-with-deep-learning-dbf5d18b4246
+- https://towardsdatascience.com/limericking-part-1-context-and-haikus-3eb057c8154f
+- https://pronouncing.readthedocs.io/en/latest/tutorial.html
 
-https://towardsdatascience.com/limericking-part-1-context-and-haikus-3eb057c8154f
 
-https://pronouncing.readthedocs.io/en/latest/tutorial.html
-
-15 EPOCHS (~30 minutes to train)
+## Examples of output followed by the converted Limmerick Poem
 
 W EH1 N SPACE Y UW1 SPACE N OW1 SPACE M EY1 K S SPACE IH0 N SPACE JH OY1 SPACE IH1 Z SPACE K W AY1 T SPACE UNK UNK UNK NEWLINE
 W EH1 N SPACE AY1 SPACE P L EY1 SPACE DH OW1 SPACE AH1 V SPACE S P R EY1 Z SPACE AY1 SPACE W ER1 SPACE AE0 K S EH1 S T NEWLINE
